@@ -5,6 +5,8 @@ import org.scaler.fakestore.Models.Category;
 import org.scaler.fakestore.Models.Product;
 import org.scaler.fakestore.dto.FakeStoreRequestDto;
 import org.scaler.fakestore.dto.FakeStoreResponseDto;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -17,19 +19,29 @@ import java.util.*;
 public class FakeStoreProductService implements ProductService{
 
     private RestTemplate restTemplate;
+    private RedisTemplate redisTemplate;
 
-    FakeStoreProductService(RestTemplate restTemplate){
+
+    FakeStoreProductService(RestTemplate restTemplate,RedisTemplate redisTemplate){
         this.restTemplate=restTemplate;
+        this.redisTemplate=redisTemplate;
     }
     @Override
     public Product getProductById(long id) throws ProductNotFound {
+        Product p = (Product) redisTemplate.opsForHash().get("PRODUCTS","PRODUCT_"+id);
+        if(p!=null){
+            return p;
+        }
         FakeStoreResponseDto fdto = restTemplate.getForObject("https://fakestoreapi.com/products/"+id,FakeStoreResponseDto.class);
-
 
         if(fdto==null){
             throw new ProductNotFound("Prod NotFound");
         }
-        return ConvertFakeStoreDtoToProduct(fdto);
+
+        p = ConvertFakeStoreDtoToProduct(fdto);
+        redisTemplate.opsForHash().put("PRODUCT","PRODUCT_"+id,p);
+
+        return p;
      }
 
     public Product ConvertFakeStoreDtoToProduct(FakeStoreResponseDto fdto){
@@ -85,7 +97,7 @@ public class FakeStoreProductService implements ProductService{
     public Product updateProduct(long id, Product p) {
         FakeStoreRequestDto requestDto = convertProductToFakeStoreRequestDto(p);
         try {
-            restTemplate.put("https://fakestoreapi.com/products/" + id, requestDto);
+           restTemplate.put("https://fakestoreapi.com/products/" + id, requestDto);
         } catch (Exception e){
             System.out.println("Error occured");
         }

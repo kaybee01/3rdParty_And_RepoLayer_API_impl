@@ -1,5 +1,6 @@
 package org.scaler.fakestore.Service;
 
+import org.scaler.fakestore.Exception.BadRequestException;
 import org.scaler.fakestore.Exception.ProductNotFound;
 import org.scaler.fakestore.Models.Category;
 import org.scaler.fakestore.Models.Product;
@@ -29,6 +30,7 @@ public class SelfProductService implements ProductService{
 
         if(optionalProduct.isEmpty()){
             throw new ProductNotFound("Product Not Found");
+
         }
 
         return optionalProduct.get();

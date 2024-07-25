@@ -5,9 +5,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
 @Entity
-public class Product extends BaseModel{
+public class Product extends BaseModel  {
 
 
     private  String title;
